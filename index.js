@@ -46,8 +46,6 @@ app.get('/api/shorturl/:number', async (req, res) => {
 app.post('/api/shorturl', async (req, res) => {
   let {url: url} = req.body;
   try {
-    var records = await ShortURL.find();
-    var recordsLen = records.length;
     var query = await ShortURL.find({url: url});
     if (query.length === 0) {
       // Record does not exist. Attempt to create a new record
@@ -56,6 +54,8 @@ app.post('/api/shorturl', async (req, res) => {
         //Check specifically for protocol:
         const protocolRegex =  /^https?:\/\//;
         if (!protocolRegex.test(url)) url = "https://" + url;
+        var records = await ShortURL.find();
+        var recordsLen = records.length;
         let newDocument = new ShortURL({ url: url, url_id: recordsLen + 1 });
         newDocument.save();
         res.json({ original_url: url, short_url: recordsLen + 1 }) 
