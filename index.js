@@ -34,44 +34,41 @@ app.get('/api/shorturl/:number', async (req, res) => {
     var query = await ShortURL.find({url_id: number});
     if (query.length === 0) {
       res.json({error: 'invalid record'});
-      return
     } else {
       res.redirect(query[0].url);
-      return
     }
   } catch(error) {
-    console.log(error);
+    res.json({error: 'error'});
   }
   
 });
 
 app.post('/api/shorturl', async (req, res) => {
-  const {url: url} = req.body;
+  let {url: url} = req.body;
   try {
     var records = await ShortURL.find();
     var recordsLen = records.length;
     var query = await ShortURL.find({url: url});
     if (query.length === 0) {
+      // Record does not exist. Attempt to create a new record
       const urlRegex = /^(?:https?:\/\/)?(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$/;
       if (urlRegex.test(url)){
-        let newURLID = recordsLen + 1;
-        let newDocument = new ShortURL({ url: url, url_id: newURLID });
+        //Check specifically for protocol:
+        const protocolRegex =  /^https?:\/\//;
+        if (!protocolRegex.test(url)) url = "https://" + url;
+        let newDocument = new ShortURL({ url: url, url_id: recordsLen + 1 });
         newDocument.save();
-        res.json({original_url: url, short_url: newURLID}) 
+        res.json({ original_url: url, short_url: recordsLen + 1 }) 
       } else {
+        //Improper URL was given
         res.json({error: 'invalid url'});
-        return
       }
     } else {
+      //Record was located. Return existing record instead of creating a new one
       res.json({original_url: query[0].url, short_url: query[0].url_id})
-      return
     }
-    var url_obj = query[0];
-    res.send(url_obj);
   } catch(error) {
-    console.log(error);
     res.json({error: "error"});
-    return
   }
 });
 
